@@ -9,9 +9,10 @@
  */
 
 import * as vscode from 'vscode';
-import { DiagnosticCode, DiagnosticInformationFromEditor, DiagnosticSeverity, InLineAgentAction, InLineAgentContextSelection, InLineAgentLLMType, InLineAgentMessage } from '../../sidecar/types';
+import { DiagnosticCode, DiagnosticInformationFromEditor, DiagnosticSeverity, InLineAgentAction, InLineAgentContextSelection, InLineAgentMessage } from '../../sidecar/types';
 import { RepoRef, SideCarClient } from '../../sidecar/client';
 import { IndentStyle, IndentStyleSpaces, IndentationHelper } from './editorSessionProvider';
+import { ModelGateway } from '../../llm/modelGateway';
 
 export interface EditMessage {
 	message: string | null;
@@ -44,7 +45,7 @@ export const reportFromStreamToEditorSessionProgress = async (
 	let finalAnswer = '';
 	let contextSelection = null;
 	let streamProcessor = null;
-	let modelReplying: InLineAgentLLMType | undefined = undefined;
+	let modelReplying: string | undefined = undefined;
 
 	for await (const inlineAgentMessage of asyncIterable) {
 		// Here we are going to go in a state machine like flow, where we are going
@@ -57,7 +58,7 @@ export const reportFromStreamToEditorSessionProgress = async (
 			// progress.report(CSInteractiveEditorProgressItem.normalMessage(inlineAgentMessage.keep_alive));
 			continue;
 		}
-		modelReplying = inlineAgentMessage.answer?.model;
+		modelReplying = inlineAgentMessage.answer?.modelId;
 		const messageState = inlineAgentMessage.message_state;
 		/*
 		if (messageState === 'Pending') {
@@ -808,11 +809,18 @@ export const convertVSCodeDiagnostic = (
 
 
 export const shouldAddLeadingStrings = (
-	model: InLineAgentLLMType | undefined,
+	modelId: string | undefined,
 ): boolean => {
-	// console.log('mode being used', model);
-	if (model === 'MistralInstruct' || model === 'Mixtral' || model === 'DeepSeekCoder1_3BInstruct' || model === 'DeepSeekCoder33BInstruct' || model === 'DeepSeekCoder6BInstruct' || model === 'CodeLLama70BInstruct' || model === 'CodeLlama13BInstruct' || model === 'CodeLlama7BInstruct') {
-		return true;
+	if (!modelId) {
+		return false;
 	}
-	return false;
+	const gateway = ModelGateway.getInstance();
+	const model = gateway.getModel(modelId);
+	if (!model) {
+		return false;
+	}
+	// This is a placeholder for a more robust check. In a real-world
+	// scenario, we might have a property on the model definition that
+	// indicates whether it requires special formatting.
+	return model.provider === 'Ollama' || model.provider === 'TogetherAI';
 };

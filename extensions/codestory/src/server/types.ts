@@ -5,7 +5,7 @@
 
 import { DocumentSymbol, SymbolInformation } from 'vscode';
 import { LLMProviderAPIKeys } from '../sidecar/providerConfigTypes';
-import { ConversationMessageVariableInformation, LLMProvider, LLMTypeVariant, SidecarVariableTypes } from '../sidecar/types';
+import { ConversationMessageVariableInformation, SidecarVariableTypes } from '../sidecar/types';
 
 type SidecarFileContent = {
 	file_path: string;
@@ -477,9 +477,6 @@ interface SymbolLocation {
 
 interface SymbolInputEvent {
 	context: UserContext;
-	llm: LLMTypeVariant;
-	provider: LLMProvider;
-	api_keys: LLMProviderAPIKeys;
 	user_query: string;
 	request_id: string;
 	swe_bench_test_endpoint?: string;
@@ -493,8 +490,7 @@ interface SymbolInputEvent {
 }
 
 interface LLMProperties {
-	llm: LLMTypeVariant;
-	provider: LLMProvider;
+	modelId: string;
 	api_keys: LLMProviderAPIKeys;
 }
 
@@ -633,10 +629,9 @@ interface CodeEdit {
 	code_to_edit: string;
 	extra_context: string;
 	language: string;
-	model: LLMTypeVariant;
+	modelId: string;
 	instruction: string;
 	api_key: LLMProviderAPIKeys;
-	provider: LLMProvider;
 	is_swe_bench_initial_edit: boolean;
 	is_new_symbol_request?: string;
 }
@@ -662,9 +657,8 @@ export interface FindCodeSnippets {
 	language: string;
 	file_path: string;
 	user_query: string;
-	llm_type: LLMTypeVariant;
+	modelId: string;
 	api_key: LLMProviderAPIKeys;
-	provider: LLMProvider;
 }
 
 interface ReRankCodeSnippet {
@@ -697,10 +691,9 @@ interface ReRankEntries {
 }
 
 interface ReRankRequestMetadata {
-	model: LLMTypeVariant;
+	modelId: string;
 	query: string;
 	provider_keys: Record<string, any>;
-	provider: LLMProvider;
 }
 
 export interface ReRankEntriesForBroker {
@@ -715,8 +708,7 @@ export interface CodeSymbolUtilitySearch {
 	fs_file_content: string;
 	selection_range: SidecarRequestRange;
 	language: string;
-	llm_type: LLMTypeVariant;
-	llm_provider: LLMProvider;
+	modelId: string;
 	api_key: LLMProviderAPIKeys;
 	user_context: UserContext;
 }
@@ -728,8 +720,7 @@ interface CodeSymbolImportantRequest {
 	fs_file_content: string;
 	selection_range: SidecarRequestRange;
 	language: string;
-	llm_type: LLMTypeVariant;
-	llm_provider: LLMProvider;
+	modelId: string;
 	api_key: LLMProviderAPIKeys;
 	query: string;
 }
@@ -738,8 +729,7 @@ interface CodeSymbolImportantRequest {
 export interface CodeSymbolImportantWideSearch {
 	user_context: UserContext;
 	user_query: string;
-	llm_type: LLMTypeVariant;
-	llm_provider: LLMProvider;
+	modelId: string;
 	api_key: LLMProviderAPIKeys;
 	file_extension_filters: Set<string>;
 }
@@ -889,16 +879,14 @@ export type ProbeEnoughOrDeeperRequest = {
 export type CodeToProbeSubSymbolRequest = {
 	xml_symbol: string;
 	query: string;
-	llm: LLMTypeVariant;
-	provider: LLMProvider;
+	modelId: string;
 	api_key: LLMProviderAPIKeys;
 };
 
 export type CodeToEditFilterRequest = {
 	snippets: Snippet[];
 	query: string;
-	llm_type: LLMTypeVariant;
-	llm_provider: LLMProvider;
+	modelId: string;
 	api_key: LLMProviderAPIKeys;
 };
 
@@ -911,8 +899,7 @@ export type CodeSymbolToAskQuestionsRequest = {
 	code_above?: string;
 	code_below?: string;
 	code_in_selection: string;
-	llm_type: LLMTypeVariant;
-	provider: LLMProvider;
+	modelId: string;
 	api_key: LLMProviderAPIKeys;
 	query: string;
 };
@@ -927,8 +914,7 @@ export type CodeSymbolFollowAlongForProbing = {
 	code_above?: string;
 	code_below?: string;
 	code_in_selection: string;
-	llm_type: LLMTypeVariant;
-	provider: LLMProvider;
+	modelId: string;
 	api_key: LLMProviderAPIKeys;
 	query: string;
 	next_symbol_link: string;
@@ -948,16 +934,14 @@ export type CodeSymbolProbingSummarize = {
 	symbol_outline: string;
 	fs_file_path: string;
 	probing_results: CodeSubSymbolProbingResult[];
-	llm: LLMTypeVariant;
-	provider: LLMProvider;
+	modelId: string;
 	api_key: LLMProviderAPIKeys;
 };
 
 export type RepoMapSearchQuery = {
 	repo_map: string;
 	user_query: string;
-	llm: LLMTypeVariant;
-	provider: LLMProvider;
+	modelId: string;
 	api_key: LLMProviderAPIKeys;
 };
 
@@ -975,8 +959,7 @@ export type TestOutputCorrectionRequest = {
 	original_code: string;
 	language: string;
 	test_output_logs: string;
-	llm: LLMTypeVariant;
-	provider: LLMProvider;
+	modelId: string;
 	api_keys: LLMProviderAPIKeys;
 	extra_code_context: string;
 };
@@ -984,8 +967,7 @@ export type TestOutputCorrectionRequest = {
 export type CodeSymbolFollowInitialRequest = {
 	code_symbol_content: string[];
 	user_query: string;
-	llm: LLMTypeVariant;
-	provider: LLMProvider;
+	modelId: string;
 	api_keys: LLMProviderAPIKeys;
 };
 
@@ -1011,8 +993,7 @@ export type LSPGrepSymbolInCodebaseRequest = {
 export type CodeToEditSymbolRequest = {
 	xml_symbol: string;
 	query: string;
-	llm: LLMTypeVariant;
-	provider: LLMProvider;
+	modelId: string;
 	api_key: LLMProviderAPIKeys;
 };
 
@@ -1094,8 +1075,7 @@ export type CodeCorrectnessRequest = {
 	previous_code: string;
 	diagnostics: Diagnostic[];
 	quick_fix_actions: QuickFixOption[];
-	llm: LLMTypeVariant;
-	provider: LLMProvider;
+	modelId: string;
 	api_keys: LLMProviderAPIKeys;
 };
 
@@ -1108,8 +1088,7 @@ export type CodeEditingErrorRequest = {
 	original_code: string;
 	error_instructions: string;
 	previous_instructions: string;
-	llm: LLMTypeVariant;
-	provider: LLMProvider;
+	modelId: string;
 	api_keys: LLMProviderAPIKeys;
 };
 
@@ -1119,8 +1098,7 @@ export type ClassSymbolFollowupRequest = {
 	language: string;
 	edited_code: string;
 	instructions: string;
-	llm: LLMTypeVariant;
-	provider: LLMProvider;
+	modelId: string;
 	api_keys: LLMProviderAPIKeys;
 };
 
