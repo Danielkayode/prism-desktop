@@ -296,20 +296,6 @@ export type InLineAgentMessageState =
 	| 'Finished'
 	| 'Errored';
 
-export type InLineAgentLLMType =
-	| 'MistralInstruct'
-	| 'Mixtral'
-	| 'Gpt4'
-	| 'GPT3_5_16k'
-	| 'Gpt4_32k'
-	| 'Gpt4Turbo'
-	| 'DeepSeekCoder33BInstruct'
-	| 'DeepSeekCoder6BInstruct'
-	| 'DeepSeekCoder1_3BInstruct'
-	| 'CodeLlama13BInstruct'
-	| 'CodeLLama70BInstruct'
-	| 'CodeLlama7BInstruct';
-
 export interface InLineAgentDocumentSymbol {
 	name: string | null;
 	start_position: Position;
@@ -325,7 +311,7 @@ export interface InLineAgentAnswer {
 	state: InLineAgentMessageState;
 	document_symbol: InLineAgentDocumentSymbol | null;
 	context_selection: InLineAgentContextSelection | null;
-	model: InLineAgentLLMType;
+	modelId: string; // The ID of the model used, e.g., "gpt-5.2"
 }
 
 
@@ -489,48 +475,44 @@ export type PlanResponse = {
 	error_if_any?: string;
 };
 
-export enum LLMType {
-	Mixtral,
-	MistralInstruct,
-	Gpt4,
-	GPT3_5_16k,
-	Gpt4_32k,
-	Gpt4O,
-	Gpt4Turbo,
-	DeepSeekCoder1_3BInstruct,
-	DeepSeekCoder33BInstruct,
-	DeepSeekCoder6BInstruct,
-	CodeLLama70BInstruct,
-	CodeLlama13BInstruct,
-	CodeLlama7BInstruct,
-	Llama3_8bInstruct,
-	ClaudeOpus,
-	ClaudeSonnet,
-	ClaudeHaiku,
-	PPLXSonnetSmall,
-	CohereRerankV3,
-	GoogleAIStudio,
-	GoogleAIStudioFlash
+// New capability-based types for the Model Gateway
+
+export type ModelCapability =
+	| 'planning_reasoning'
+	| 'code_generation'
+	| 'long_context'
+	| 'fast_inline'
+	| 'local_private';
+
+export type ModelProviderId =
+	| 'OpenAI'
+	| 'Anthropic'
+	| 'GoogleAIStudio'
+	| 'OpenRouter'
+	| 'Ollama'
+	| 'LMStudio'
+	| 'FireworksAI'
+	| 'TogetherAI';
+
+export interface ModelDefinition {
+	id: string; // e.g., 'gpt-5.2'
+	provider: ModelProviderId;
+	name: string; // User-facing name, e.g., "GPT-5.2"
+	capabilities: ModelCapability[];
+	contextLength: number;
+	cost?: {
+		prompt: number; // cost per 1M tokens
+		completion: number; // cost per 1M tokens
+	};
+	infoUrl?: string;
+	description?: string;
 }
 
-export enum LLMProvider {
-	OpenAI,
-	TogetherAI,
-	Ollama,
-	LMStudio,
-	OpenAICompatible,
-	Anthropic,
-	FireworksAI,
-	GoogleAIStudio,
-	OpenRouter,
+export interface ProviderConfiguration {
+	id: ModelProviderId;
+	apiKey?: string;
+	apiBase?: string;
 }
-
-export type CustomLLMType = {
-	kind: 'Custom';
-	value: string;
-};
-
-export type LLMTypeVariant = LLMType | CustomLLMType;
 
 export type IdentifierNodeInformation = {
 	name: string;
@@ -552,184 +534,5 @@ export type IdentifierNodeType = {
 	import_nodes: IdentifierNodeInformation[];
 };
 
-
-// Helper function to convert the model configuration to the sidecar type
-// the final json should look like this:
-// {
-// 	"slow_model":"slow_model",
-// 	"fast_model":"fast_model",
-// 	"models":{
-// 		"slow_model":
-// 			{
-// 				"context_length":16000,
-// 				"temperature":0.2,
-// 				"provider":{
-// 					"Azure":{
-// 						"deployment_id":"gpt35-turbo-access"
-// 					}
-// 				}
-// 			}
-// 		},
-// 		"providers":[
-// 			{"OpenAIAzureConfig":{
-// 				"deployment_id":"gpt35-turbo-access",
-// 				"api_base":"https://codestory-gpt4.openai.azure.com",
-// 				"api_key":"89ca8a49a33344c9b794b3dabcbbc5d0",
-// 				"api_version":"v1"
-// 			}
-// 		}
-// 	]
-// }
-export async function getSideCarModelConfiguration(modelSelection: ModelSelection, workosAccessToken: string) {
-	const slowModel = modelSelection.slowModel;
-	const fastModel = modelSelection.fastModel;
-	const models = modelSelection.models;
-	const modelRecord = {};
-	for (const [key, value] of Object.entries(models)) {
-		const modelConfiguration = {
-			context_length: value.contextLength,
-			temperature: value.temperature,
-			provider: getModelProviderConfiguration(value.provider, key),
-		};
-		// @ts-ignore
-		modelRecord[key] = modelConfiguration;
-	}
-	const providers = modelSelection.providers;
-	const finalProviders = [];
-	for (const [key, value] of Object.entries(providers)) {
-		const providerConfigSideCar = getProviderConfiguration(key, value, workosAccessToken);
-		if (providerConfigSideCar !== null) {
-			finalProviders.push(providerConfigSideCar);
-		}
-	}
-	return {
-		'slow_model': slowModel,
-		'fast_model': fastModel,
-		'models': modelRecord,
-		'providers': finalProviders,
-	};
-}
-
-// The various types are present in aiModels.ts
-function getProviderConfiguration(type: string, value: ModelProviderConfiguration, workosAccessToken: string) {
-	if (type === 'openai-default') {
-		return {
-			'OpenAI': {
-				'api_key': value.apiKey,
-			}
-		};
-	}
-	if (type === 'azure-openai') {
-		return {
-			'OpenAIAzureConfig': {
-				'deployment_id': '',
-				'api_base': value.apiBase,
-				'api_key': value.apiKey,
-				// TODO(skcd): Fix the hardcoding of api version here, this will
-				// probably come from the api version in azure config
-				'api_version': '2023-08-01-preview',
-			}
-		};
-	}
-	if (type === 'togetherai') {
-		return {
-			'TogetherAI': {
-				'api_key': value.apiKey,
-			}
-		};
-	}
-	if (type === 'ollama') {
-		return {
-			'Ollama': {}
-		};
-	}
-	if (type === 'openai-compatible') {
-		return {
-			'OpenAICompatible': {
-				'api_key': value.apiKey,
-				'api_base': value.apiBase,
-			}
-		};
-	}
-	if (type === 'codestory') {
-		// if its codestory then we also want to provider the access token over here
-		return {
-			'CodeStory': {
-				access_token: workosAccessToken
-			}
-		};
-	}
-	if (type === 'anthropic') {
-		return {
-			'Anthropic': {
-				'api_key': value.apiKey,
-			}
-		};
-	}
-	if (type === 'fireworkai') {
-		return {
-			'FireworksAI': {
-				'api_key': value.apiKey,
-			}
-		};
-	}
-	if (type === 'geminipro') {
-		// gemini pro now points to google-ai-studio which is what everyone is
-		// used to
-		return {
-			'GoogleAIStudio': {
-				'api_key': value.apiKey,
-			}
-		};
-	}
-	if (type === 'open-router') {
-		return {
-			'OpenRouter': {
-				'api_key': value.apiKey,
-			}
-		};
-	}
-	return null;
-}
-
-function getModelProviderConfiguration(providerConfiguration: ProviderSpecificConfiguration, _llmType: string) {
-	if (providerConfiguration.type === 'openai-default') {
-		return 'OpenAI';
-	}
-	if (providerConfiguration.type === 'azure-openai') {
-		return {
-			'Azure': {
-				'deployment_id': providerConfiguration.deploymentID,
-			}
-		};
-	}
-	if (providerConfiguration.type === 'togetherai') {
-		return 'TogetherAI';
-	}
-	if (providerConfiguration.type === 'ollama') {
-		return 'Ollama';
-	}
-	if (providerConfiguration.type === 'codestory') {
-		return {
-			'CodeStory': {
-				'llm_type': null,
-			},
-		};
-	}
-	if (providerConfiguration.type === 'openai-compatible') {
-		return 'OpenAICompatible';
-	}
-	if (providerConfiguration.type === 'anthropic') {
-		return 'Anthropic';
-	}
-	if (providerConfiguration.type === 'fireworkai') {
-		return 'FireworksAI';
-	}
-	if (providerConfiguration.type === 'geminipro') {
-		return 'GoogleAIStudio';
-	}
-	if (providerConfiguration.type === 'open-router') {
-		return 'OpenRouter';
-	}
-	return null;
-}
+// The old helper functions for model configuration have been removed.
+// This logic will be replaced by the new Model Gateway and Model Selector.
