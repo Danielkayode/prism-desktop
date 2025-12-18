@@ -95,7 +95,44 @@ The application uses an abstracted, service-based approach for interacting with 
     *   **Security Risks:** The Electron version and other dependencies are outdated, which can pose a security risk. This is the primary vulnerability of the codebase.
     *   **Extension Compatibility:** Modern extensions from the VS Code Marketplace may not be compatible with this older version of the editor.
 
-## 7. Conclusion and Recommendation
+## 7. Detailed List of Missing Features from Modern VS Code
+
+This section details significant features, UI enhancements, and architectural improvements present in modern VS Code that are absent from this codebase (which is based on version 1.97 from early 2024). This list excludes native GitHub Copilot features, focusing instead on underlying editor and architectural changes.
+
+**General UI & Workbench:**
+
+*   **Floating Window Modes:** The ability to move editors and views into smaller, floating windows that can be set to "compact" or "always-on-top" mode for multi-window setups.
+*   **Unified Chat UI:** Modern VS Code has merged the separate "Chat" and "AI Edits" views into a single, unified chat interface with distinct modes (`Ask`, `Edit`, `Agent`). This is a fundamental change to the AI user experience that this codebase lacks.
+*   **Secondary Side Bar Improvements:** The secondary side bar has been updated to show view labels instead of just icons, and its default visibility is now configurable.
+*   **Stricter Extension Security:** Mandatory signature verification for all extensions is now enforced on Linux, in addition to Windows and macOS, providing a stronger security posture.
+*   **Improved Settings Editor Search:** The search algorithm in the settings UI has been completely revamped to provide more relevant and accurate results.
+*   **Customizable Window Controls:** The custom title bar on Windows and Linux now has multiple styles, allowing for more UI customization.
+*   **Quick Diff for Staged Changes:** The editor's gutter now shows diff decorations for staged changes, a long-requested feature that allows developers to see what's staged without leaving the editor.
+
+**Terminal:**
+
+*   **Terminal IntelliSense:** A rich, configurable autocompletion system for shell commands. This includes support for `fig` completion specs and dynamic generators, providing a much more powerful terminal experience.
+*   **Advanced Shell Integration:** Newer versions have more reliable shell integration, which is crucial for AI agent features that run terminal commands. This includes better detection of command aliases and support for `$CDPATH`.
+*   **Signed PowerShell Scripts:** The shell integration scripts for PowerShell are now signed, allowing them to work out-of-the-box with default security policies on Windows.
+
+**AI & Chat Architecture (Non-Copilot Specific):**
+
+*   **Model Context Protocol (MCP):** A major architectural addition that provides a standardized way for AI models to discover and interact with external tools and data sources. This is a foundational piece for more advanced agentic capabilities.
+*   **Reusable Prompt & Instruction Files:** Modern VS Code has a system for creating, storing, and sharing complex prompts (`.prompt.md`) and reusable instructions/context (`.instructions.md`). This allows for more powerful and consistent interactions with AI models.
+*   **Bring Your Own Key (BYOK):** A feature that allows users to connect to various LLM providers (like Anthropic, Gemini, and OpenAI) using their own API keys, expanding the range of available models.
+
+**Editor & Languages:**
+
+*   **Tree-Sitter Syntax Highlighting:** VS Code is in the process of replacing its older Textmate grammars with Tree-Sitter for more accurate and performant syntax highlighting. This has been rolled out experimentally for several languages, including CSS and regex.
+*   **ESM Support for Extensions:** The extension host now supports extensions written using modern ES Modules, which is a significant change for extension developers.
+*   **Browser Compatibility Hovers:** CSS and HTML hovers now display browser compatibility information from the Baseline project.
+*   **TypeScript and Node.js Updates:** This codebase is frozen on older versions of TypeScript and Node.js. It is missing years of language features, performance improvements, and security updates.
+
+**Underlying Architecture:**
+
+*   **Electron Updates:** The codebase is multiple major versions behind in its Electron framework. This is a critical security and performance issue, as it's missing years of updates from the underlying Chromium and Node.js runtimes.
+
+## 8. Conclusion and Recommendation
 
 The codebase is **significantly outdated** and **unmaintained**.
 
