@@ -18,19 +18,44 @@ The codebase is a fork of Microsoft's Visual Studio Code (`Code - OSS`). It reta
 
 ## 2. AI Models and Providers
 
-The system is designed to be model-agnostic through a provider-based service.
+The system is designed to be model-agnostic through a provider-based service, with the core logic residing in `extensions/codestory/src/sidecar/types.ts`.
 
 *   **AI Model Service (`src/vs/workbench/services/aiModel/browser/aiModelService.ts`):** A core service that allows different AI model providers to be registered and used by the workbench.
-*   **Supported Providers:** The code explicitly references configurations for:
-    *   `openai-default` (OpenAI)
-    *   `azure-openai` (Azure OpenAI)
-    *   `anthropic`
-    *   `geminipro`
-    *   `togetherai`
-    *   `fireworkai`
-    *   `open-router`
-    *   `ollama`
-    *   Other `openai-compatible` endpoints.
+
+*   **Supported Providers:** The `LLMProvider` enum lists the following providers:
+    *   OpenAI
+    *   TogetherAI
+    *   Ollama
+    *   LMStudio
+    *   OpenAICompatible
+    *   Anthropic
+    *   FireworksAI
+    *   GoogleAIStudio
+    *   OpenRouter
+
+*   **Supported Models:** The `LLMType` enum lists the following specific models:
+    *   Mixtral
+    *   MistralInstruct
+    *   Gpt4
+    *   GPT3_5_16k
+    *   Gpt4_32k
+    *   Gpt4O
+    *   Gpt4Turbo
+    *   DeepSeekCoder1_3BInstruct
+    *   DeepSeekCoder33BInstruct
+    *   DeepSeekCoder6BInstruct
+    *   CodeLLama70BInstruct
+    *   CodeLlama13BInstruct
+    *   CodeLlama7BInstruct
+    *   Llama3_8bInstruct
+    *   ClaudeOpus
+    *   ClaudeSonnet
+    *   ClaudeHaiku
+    *   PPLXSonnetSmall
+    *   CohereRerankV3
+    *   GoogleAIStudio
+    *   GoogleAIStudioFlash
+
 *   **Implementation (`extensions/codestory`):** The `codestory` extension is the primary consumer of these AI services. It includes the `openai` npm package and contains the logic for formatting requests and handling responses from the various supported providers. Communication with the AI models is proxied through a local sidecar process.
 
 ## 3. Available Tool Calls
