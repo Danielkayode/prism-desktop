@@ -146,6 +146,7 @@ export class AideAgentSessionProvider implements vscode.AideSessionParticipant {
 		private currentRepoRef: RepoRef,
 		private projectContext: ProjectContext,
 		private sidecarClient: SideCarClient,
+		private mcpClient: MCPClient,
 		recentEditsRetriever: RecentEditsRetriever,
 		extensionContext: vscode.ExtensionContext,
 	) {
@@ -464,7 +465,25 @@ export class AideAgentSessionProvider implements vscode.AideSessionParticipant {
 		try {
 			if (agentMode === vscode.AideAgentMode.Chat) {
 				const responseStream = this.sidecarClient.agentSessionChat(prompt, sessionId, exchangeIdForEvent, editorUrl, agentMode, variables, this.currentRepoRef, this.projectContext.labels, workosAccessToken);
-				await this.reportAgentEventsToChat(sessionId, responseStream, authCallbacks);
+				await this.reportAgentEventsToChat(sessionId, responseStream, authCallbacks, {
+					onToolCall: async (toolName, toolInput) => {
+						const mcpTools = await this.mcpClient.listTools();
+						const tool = mcpTools.tools.find(t => t.name === toolName);
+						if (tool) {
+							const responseStream = this.responseStreamCollection.getResponseStream({ sessionId, exchangeId: exchangeIdForEvent });
+							if (responseStream) {
+								responseStream.stream.tool({
+									toolName: tool.name,
+									arguments: toolInput,
+									onDidExecute: async () => {
+										const result = await this.mcpClient.callTool(tool.id, tool.name, toolInput);
+										// TODO: Send the result back to the sidecar
+									}
+								});
+							}
+						}
+					}
+				});
 			} else if (agentMode === vscode.AideAgentMode.Edit) {
 				// Now lets try to handle the edit event first
 				// there are 2 kinds of edit events:

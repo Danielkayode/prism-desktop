@@ -25,6 +25,7 @@ import {
 import { completionProviderConfig } from './completion-provider-config';
 import { disableLoadingStatus, setLoadingStatus } from '../inlineCompletion/statusBar';
 import { SideCarClient } from '../sidecar/client';
+import { MCPClient } from '../mcp/client';
 import { uniqueId } from 'lodash';
 import { TypeDefinitionProviderWithNode, typeDefinitionForIdentifierNodes } from './helpers/vscodeApi';
 

@@ -5,18 +5,28 @@
 
 const path = require('path');
 
-const srcDir = path.join(__dirname, 'preview-src');
-const outDir = path.join(__dirname, 'media');
+const srcDir = path.join(__dirname, 'src', 'mcp', 'ui');
+const outDir = path.join(__dirname, 'dist');
+const copyStaticFiles = require('esbuild-copy-static-files');
 
 require('../esbuild-webview-common').run({
 	entryPoints: {
-		'index': path.join(srcDir, 'index.ts'),
+		'server-management': path.join(srcDir, 'server-management.js'),
 	},
 	srcDir,
 	outdir: outDir,
 	additionalOptions: {
 		loader: {
 			'.ttf': 'dataurl',
-		}
+		},
+        plugins: [
+            copyStaticFiles({
+                src: srcDir,
+                dest: outDir,
+                filter: (src, dest) => {
+                    return src.endsWith('.css');
+                }
+            })
+        ]
 	},
 }, process.argv);

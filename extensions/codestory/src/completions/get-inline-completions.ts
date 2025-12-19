@@ -182,6 +182,7 @@ async function doGetInlineCompletions(
 		abortSignal,
 		artificialDelay,
 		sidecarClient,
+		mcpClient,
 		logger,
 		spanId,
 		startTime,
@@ -189,6 +190,9 @@ async function doGetInlineCompletions(
 		identifierNodes,
 	} = params;
 	const multiline = Boolean(multilineTrigger);
+
+	const mcpResources = await mcpClient.listResources();
+	const externalContext = mcpResources.resources.map(resource => resource.content).join('\n');
 
 	const requestParams: RequestParams = {
 		document,
@@ -198,6 +202,7 @@ async function doGetInlineCompletions(
 		abortSignal,
 		clipBoardContent,
 		identifierNodes,
+		externalContext,
 	};
 
 	const cachedResult = requestManager.checkCache({

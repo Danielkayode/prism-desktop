@@ -31,8 +31,10 @@ import { ProjectContext } from './utilities/workspaceContext';
 import { installCommandMap, PACKAGE_NAME as COMPONENT_TAGGER_PACKAGE_NAME, PackageManager, transformViteConfig } from './devtools/react/installVitePlugin';
 import { executeTerminalCommand } from './terminal/TerminalManager';
 import { basename, dirname } from 'node:path';
+import { MCPClient } from './mcp/client';
 
 export let SIDECAR_CLIENT: SideCarClient | null = null;
+export let MCP_CLIENT: MCPClient | null = null;
 
 const showBrowserCommand = 'codestory.show-simple-browser';
 
@@ -102,6 +104,25 @@ export async function activate(context: vscode.ExtensionContext) {
 	const modelConfiguration = await vscode.modelSelection.getConfiguration();
 	const sidecarClient = new SideCarClient(modelConfiguration);
 	SIDECAR_CLIENT = sidecarClient;
+
+	const mcpClient = new MCPClient();
+	MCP_CLIENT = mcpClient;
+
+	const registerMCPManagementCommand = vscode.commands.registerCommand(
+		'codestory.mcpManagement',
+		() => MCPWebAppPanel.createOrShow(context.extensionPath)
+	);
+	context.subscriptions.push(registerMCPManagementCommand);
+
+	const registerConnectToMcpServerCommand = vscode.commands.registerCommand(
+		'codestory.connectToMcpServer',
+		(command: string, args: string[]) => {
+			if (MCP_CLIENT) {
+				MCP_CLIENT.connectToServer(command, args);
+			}
+		}
+	);
+	context.subscriptions.push(registerConnectToMcpServerCommand);
 
 	// Setup the current repo representation here
 	const currentRepo = new RepoRef(
@@ -335,6 +356,14 @@ export async function activate(context: vscode.ExtensionContext) {
 		'codestory.install-vite-plugin',
 		async (givenViteConfigUri?: vscode.Uri) => {
 			try {
+				// Temporary command for testing the MCP Web App Panel
+				const openMCPWebAppPanelCommand = vscode.commands.registerCommand(
+					'codestory.openMCPWebAppPanel',
+					() => {
+						MCPWebAppPanel.createOrShow(context.extensionPath);
+					}
+				);
+				context.subscriptions.push(openMCPWebAppPanelCommand);
 
 				// Check that we have a workspace at all
 				const workspaceFolders = vscode.workspace.workspaceFolders;
