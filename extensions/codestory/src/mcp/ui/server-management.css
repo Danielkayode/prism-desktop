@@ -1,0 +1,57 @@
+body {
+    font-family: sans-serif;
+    padding: 1rem;
+}
+
+h1, h2 {
+    font-weight: 300;
+}
+
+#server-list {
+    margin-bottom: 2rem;
+}
+
+.server {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 0.5rem;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+    margin-bottom: 0.5rem;
+}
+
+.server-status {
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    margin-right: 1rem;
+}
+
+.server-status.connected {
+    background-color: green;
+}
+
+.server-status.disconnected {
+    background-color: red;
+}
+
+.add-server-form {
+    display: flex;
+    flex-direction: column;
+}
+
+input {
+    margin-bottom: 0.5rem;
+    padding: 0.5rem;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+}
+
+button {
+    padding: 0.5rem;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+    background-color: #eee;
+    cursor: pointer;
+}
